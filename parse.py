@@ -61,7 +61,7 @@ def is_valid(maml_data: dict[str:str]) -> bool:
 
         fields = maml_data["fields"]
         for field in fields:
-            for required in RECOMENDED_FIELD_META_DATA:
+            for required in REQURED_FIELD_META_DATA:
                 _ = field[required]
     except KeyError:
         return False

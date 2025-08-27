@@ -1,7 +1,5 @@
 survey: Survey Name
 dataset: dataset Name
-table: Table Name
-version: '0.0'
 date: '2025-08-26'
 author: Lead Author <email>
 coauthors:
@@ -27,7 +25,6 @@ fields:
   unit: 
   description: 
   ucd: 
-  data_type: string
 - name: Flag
   unit: 
   description: 
