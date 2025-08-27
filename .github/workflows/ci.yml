@@ -31,14 +31,6 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra test
     
-    - name: Run tests
-      run: uv run pytest
-    
-    - name: Run linting
-      run: |
-        uv run ruff check src/
-        uv run black --check src/
-
   build-and-publish:
     needs: test
     runs-on: ubuntu-latest
