@@ -10,8 +10,7 @@ from unittest.mock import patch
 
 import yaml
 
-from maml import Field, MAML, FIELD_KEY_ORDER, MAML_KEY_ORDER
-
+from pymaml import Field, MAML, FIELD_KEY_ORDER, MAML_KEY_ORDER
 
 class TestField(unittest.TestCase):
     """Testing that the field class works."""

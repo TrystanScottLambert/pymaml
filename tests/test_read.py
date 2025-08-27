@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import yaml
 
-import read
+from pymaml import read
 
 
 class TestReadMaml(unittest.TestCase):

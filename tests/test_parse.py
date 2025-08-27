@@ -4,8 +4,8 @@ Tests for the parse module
 
 import unittest
 import datetime
-from parse import is_iso8601, is_valid
 
+from pymaml import is_iso8601, is_valid
 
 class TestIsISO8601(unittest.TestCase):
     """Testing correct iso dates are validated correctly"""
