@@ -10,12 +10,28 @@ OPTIONAL_META_DATA = ["coauthors", "depend", "comment"]
 
 REQURED_FIELD_META_DATA = ["name", "datatype"]
 RECOMENDED_FIELD_META_DATA = ["unit", "description", "ucd"]
+FIELD_KEY_ORDER = ["name", "unit", "description", "ucd", "data_type"]
+
+MAML_KEY_ORDER = [
+    "survey",
+    "dataset",
+    "table",
+    "version",
+    "date",
+    "author",
+    "coauthors",
+    "depend",
+    "comment",
+    "fields",
+]
+
 
 def today() -> str:
     """
     Returns todays date in the correct iso format.
     """
     return datetime.date.isoformat(datetime.date.today())
+
 
 def is_iso8601(date: str) -> bool:
     """
@@ -28,7 +44,7 @@ def is_iso8601(date: str) -> bool:
         return False
 
 
-def is_valid(maml_data: dict[str: str]) -> bool:
+def is_valid(maml_data: dict[str:str]) -> bool:
     """
     Checks if the dict is a valid representation of maml data
     """
