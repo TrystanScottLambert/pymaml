@@ -10,7 +10,7 @@ import yaml
 from yaml import SafeDumper
 from astropy.io.votable.ucd import check_ucd
 
-from parse import (
+from .parse import (
     today,
     is_valid,
     RECOMENDED_META_DATA,
@@ -19,7 +19,7 @@ from parse import (
     FIELD_KEY_ORDER,
     RECOMENDED_FIELD_META_DATA,
 )
-from read import read_maml
+from .read import read_maml
 
 
 @dataclass

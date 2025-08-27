@@ -6,7 +6,7 @@ import os
 
 import yaml
 
-from parse import is_valid
+from .parse import is_valid
 
 warnings.formatwarning = lambda msg, *args, **kwargs: f"{msg}\n"
 
