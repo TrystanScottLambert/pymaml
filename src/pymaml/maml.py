@@ -178,7 +178,7 @@ class MAML:
         """
         Helper method to add a new field.
         """
-        validated_field = Field(name, data_type, unit, description, ucd)
+        validated_field = Field(name = name, data_type=data_type, unit=unit, description=description, ucd=ucd)
         self.fields.append(validated_field)
 
     def add_comment(self, comment: str):
@@ -191,6 +191,6 @@ class MAML:
         """
         Helper method which sets the date if it is in the correct format.
         """
-        if is_iso8601(date):
+        if not is_iso8601(date):
             raise ValueError(f"'{date}' is not in ISO8601 format")
         self.date = date
