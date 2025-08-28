@@ -141,3 +141,28 @@ class MAML:
             yaml.safe_dump(
                 self.to_dict(), file, sort_keys=False, default_flow_style=False
             )
+
+    @classmethod
+    def default(cls):
+        """
+        Creates a default implementation.
+        """
+        return cls(
+            table="Table Name",
+            author="Lead Author",
+            survey="Survey Name",
+            dataset="Dataset Name",
+            version="0.0.1",
+            date="1995-12-09",
+            author="Lead Author <email>",
+            coauthors=["Co-Author 1 <email1>", "Co-Author 2 <email2>"],
+            depend=[
+                "Dataset 1 depends on [optional]",
+                "Dataset 2 depends on [optional]",
+            ],
+            comment=["Something 1", "Something 2"],
+            fields=[
+                Field("RA", "float", "deg", "Right Ascension", "pos.eq.ra"),
+                Field("Dec", "float", "deg", "Declination", "pos.eq.dec"),
+            ],
+        )
