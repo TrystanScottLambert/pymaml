@@ -13,6 +13,7 @@ from astropy.io.votable.ucd import check_ucd
 from .parse import (
     today,
     is_valid,
+    is_iso8601,
     RECOMENDED_META_DATA,
     OPTIONAL_META_DATA,
     MAML_KEY_ORDER,
@@ -165,3 +166,31 @@ class MAML:
                 Field("Dec", "float", "deg", "Declination", "pos.eq.dec"),
             ],
         )
+
+    def add_field(
+        self,
+        name: str,
+        data_type: str,
+        unit: str = None,
+        description: str = None,
+        ucd: str = None,
+    ):
+        """
+        Helper method to add a new field.
+        """
+        validated_field = Field(name, data_type, unit, description, ucd)
+        self.fields.append(validated_field)
+
+    def add_comment(self, comment: str):
+        """
+        Helper method to add comments
+        """
+        self.comment.append(str(comment))
+
+    def set_date(self, date: str) -> None:
+        """
+        Helper method which sets the date if it is in the correct format.
+        """
+        if is_iso8601(date):
+            raise ValueError(f"'{date}' is not in ISO8601 format")
+        self.date = date
