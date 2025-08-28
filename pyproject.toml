@@ -1,6 +1,6 @@
 [project]
 name = "pymaml"
-version = "0.3.3"
+version = "0.3.4"
 description = "Python reader, writer and validator for Meta yAML (MAML)."
 readme = "README.md"
 authors = [
