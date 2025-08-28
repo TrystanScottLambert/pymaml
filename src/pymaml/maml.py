@@ -149,7 +149,6 @@ class MAML:
         """
         return cls(
             table="Table Name",
-            author="Lead Author",
             survey="Survey Name",
             dataset="Dataset Name",
             version="0.0.1",
