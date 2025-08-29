@@ -26,14 +26,14 @@ class TestMAML(unittest.TestCase):
                     name="RA",
                     data_type="float",
                     unit="deg",
-                    description="Right Ascension",
+                    info="Right Ascension",
                     ucd="pos.eq.ra",
                 ),
                 Field(
                     name="Dec",
                     data_type="float",
                     unit="deg",
-                    description="Declination",
+                    info="Declination",
                     ucd="pos.eq.dec",
                 ),
             ],
@@ -42,11 +42,12 @@ class TestMAML(unittest.TestCase):
             "version": "0.0.1",
             "date": "1995-12-09",
             "coauthors": ["Co-Author 1 <email1>", "Co-Author 2 <email2>"],
-            "depend": [
+            "depends": [
                 "Dataset 1 depends on [optional]",
                 "Dataset 2 depends on [optional]",
             ],
-            "comment": ["Something 1", "Something 2"],
+            "description": "A couple sentences about the table.",
+            "comments": ["Something 1", "Something 2"],
         }
         for res, ans in zip(result, answer):
             self.assertEqual(res, ans)
@@ -87,4 +88,4 @@ class TestMAML(unittest.TestCase):
         """
         maml = MAML.default()
         maml.add_comment(5)
-        self.assertEqual(maml.comment[-1], "5")
+        self.assertEqual(maml.comments[-1], "5")

@@ -19,6 +19,8 @@ from .parse import (
     MAML_KEY_ORDER,
     FIELD_KEY_ORDER,
     RECOMENDED_FIELD_META_DATA,
+    REQURED_FIELD_META_DATA,
+    OPTIONAL_FIELD_META_DATA,
 )
 from .read import read_maml
 
@@ -32,8 +34,9 @@ class Field:
     name: str
     data_type: str
     unit: str = None
-    description: str = None
+    info: str = None
     ucd: str = None
+    array_size: int = None
 
     def __post_init__(self):
         if self.ucd is not None:
@@ -45,22 +48,24 @@ class Field:
         """
         Constructs a field object from a dictionary.
         """
-        try:
-            name = dictionary["name"]
-            datatype = dictionary["data_type"]
-        except KeyError as exc:
-            raise AttributeError(
-                "Dictionary object does not have the correct values to be read in as a field."
-            ) from exc
-        value = cls(name=name, data_type=datatype)
+        value = cls(name=None, data_type=None)
+        for req in REQURED_FIELD_META_DATA:
+            if req in dictionary:
+                setattr(value, req, dictionary[req])
+            else:
+                raise ValueError(f"{req} missing for a valid Field entry.")
 
         for rec in RECOMENDED_FIELD_META_DATA:
             if rec in dictionary:
                 setattr(value, rec, dictionary[rec])
             else:
                 warnings.warn(
-                    f"Recomended property {rec} not found in dictionary for {name} field"
+                    f"Recomended property '{rec}' not in dictionary for {dictionary["name"]} field"
                 )
+
+        for opt in OPTIONAL_FIELD_META_DATA:
+            if opt in dictionary:
+                setattr(value, opt, dictionary[opt])
 
         try:
             ucd = dictionary["ucd"]
@@ -87,8 +92,9 @@ class MAML:
     version: str = "0.1.0"
     date: str = today()
     coauthors: list[str] = None
-    depend: list[str] = None
-    comment: list[str] = None
+    depends: list[str] = None
+    description: str = None
+    comments: list[str] = None
 
     @classmethod
     def from_file(cls, file_name: str) -> None:
@@ -103,6 +109,7 @@ class MAML:
         value = cls(
             table=dictionary["table"], author=dictionary["author"], fields=fields
         )
+
         for recommended in RECOMENDED_META_DATA:
             if recommended in dictionary:
                 setattr(value, recommended, dictionary[recommended])
@@ -156,11 +163,12 @@ class MAML:
             date="1995-12-09",
             author="Lead Author <email>",
             coauthors=["Co-Author 1 <email1>", "Co-Author 2 <email2>"],
-            depend=[
+            depends=[
                 "Dataset 1 depends on [optional]",
                 "Dataset 2 depends on [optional]",
             ],
-            comment=["Something 1", "Something 2"],
+            description="A couple sentences about the table.",
+            comments=["Something 1", "Something 2"],
             fields=[
                 Field("RA", "float", "deg", "Right Ascension", "pos.eq.ra"),
                 Field("Dec", "float", "deg", "Declination", "pos.eq.dec"),
@@ -172,20 +180,28 @@ class MAML:
         name: str,
         data_type: str,
         unit: str = None,
-        description: str = None,
+        info: str = None,
         ucd: str = None,
+        array_size: int = None,
     ):
         """
         Helper method to add a new field.
         """
-        validated_field = Field(name = name, data_type=data_type, unit=unit, description=description, ucd=ucd)
+        validated_field = Field(
+            name=name,
+            data_type=data_type,
+            unit=unit,
+            info=info,
+            ucd=ucd,
+            array_size=array_size,
+        )
         self.fields.append(validated_field)
 
     def add_comment(self, comment: str):
         """
         Helper method to add comments
         """
-        self.comment.append(str(comment))
+        self.comments.append(str(comment))
 
     def set_date(self, date: str) -> None:
         """

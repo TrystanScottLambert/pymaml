@@ -10,12 +10,13 @@ from rich.text import Text
 from astropy.io.votable.ucd import check_ucd
 
 REQUIRED_META_DATA = ["table", "version", "date", "author", "fields"]
-RECOMENDED_META_DATA = ["survey", "dataset"]
-OPTIONAL_META_DATA = ["coauthors", "depend", "comment"]
+RECOMENDED_META_DATA = ["dataset", "description"]
+OPTIONAL_META_DATA = ["survey", "coauthors", "depends", "comments"]
 
 REQURED_FIELD_META_DATA = ["name", "data_type"]
-RECOMENDED_FIELD_META_DATA = ["unit", "description", "ucd"]
-FIELD_KEY_ORDER = ["name", "unit", "description", "ucd", "data_type"]
+RECOMENDED_FIELD_META_DATA = ["unit", "info", "ucd"]
+OPTIONAL_FIELD_META_DATA = ["array_size"]
+FIELD_KEY_ORDER = ["name", "unit", "info", "ucd", "data_type"]
 
 MAML_KEY_ORDER = [
     "survey",
@@ -25,8 +26,9 @@ MAML_KEY_ORDER = [
     "date",
     "author",
     "coauthors",
-    "depend",
-    "comment",
+    "depends",
+    "description",
+    "comments",
     "fields",
 ]
 
