@@ -21,7 +21,9 @@ class Read(unittest.TestCase):
             data = yaml.safe_load(file)
 
         metadata = V1P0(**data)
-        self.assertEqual(metadata.license, "Recommended license for the dataset / table")
+        self.assertEqual(
+            metadata.license, "Recommended license for the dataset / table"
+        )
         self.assertEqual(metadata.survey, "Optional survey name")
         self.assertEqual(
             metadata.version, "Required version (string, integer, or float)"
@@ -35,8 +37,14 @@ class Read(unittest.TestCase):
             data = yaml.safe_load(file)
 
         metadata = V1P1(**data)
-        self.assertEqual(metadata.license, "Recommended license for the dataset / table")
+        self.assertEqual(
+            metadata.license, "Recommended license for the dataset / table"
+        )
         self.assertEqual(metadata.survey, "Optional survey name")
         self.assertEqual(
             metadata.version, "Required version (string, integer, or float)"
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
