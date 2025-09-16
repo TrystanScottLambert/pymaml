@@ -15,7 +15,7 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, Field
 
 
-class DOIs(BaseModel):
+class DOIEntry(BaseModel):
     """
     DOI field that holds the DOI and the type of DOI.
     """
@@ -24,7 +24,7 @@ class DOIs(BaseModel):
     type: str = Field(..., description="Type of DOI")
 
 
-class Depend(BaseModel):
+class DependEntry(BaseModel):
     """
     Depends field that tells you what tables the meta data depends on.
     """
@@ -39,7 +39,7 @@ class Depend(BaseModel):
     )
 
 
-class Qc(BaseModel):
+class QCEntry(BaseModel):
     """
     Quality Control field that allows for min/max checks during data validation.
     """
@@ -49,7 +49,7 @@ class Qc(BaseModel):
     miss: Optional[Union[float, str]] = None
 
 
-class FieldModel(BaseModel):
+class FieldEntry(BaseModel):
     """
     Fields field describing the columns of the table.
     """
@@ -66,7 +66,7 @@ class FieldModel(BaseModel):
     array_size: Optional[Union[int, str]] = Field(
         None, description="Optional max length of string"
     )
-    qc: Optional[Qc] = Field(None, description="Optional quality control parameters")
+    qc: Optional[QCEntry] = Field(None, description="Optional quality control parameters")
 
 
 class V1P0(BaseModel):
@@ -90,8 +90,8 @@ class V1P0(BaseModel):
     coauthors: Optional[Union[str, List[str]]] = Field(
         None, description="Optional coauthor name and optionally <email>"
     )
-    DOIs: Optional[List[DOIs]] = None
-    depends: Optional[List[Depend]] = None
+    DOIs: Optional[List[DOIEntry]] = None
+    depends: Optional[List[DependEntry]] = None
     description: Optional[str] = Field(
         None, description="Recommended short description of the table"
     )
@@ -105,4 +105,4 @@ class V1P0(BaseModel):
     MAML_version: float = Field(
         1.0, const=True, description="Optional version of the MAML schema"
     )
-    fields: List[FieldModel]
+    fields: List[FieldEntry]
