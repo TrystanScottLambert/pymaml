@@ -13,6 +13,7 @@ from datetime import date as date_aliased
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
+from astropy.io.votable.ucd import check_ucd
 
 
 class DOIEntry(BaseModel):
@@ -69,6 +70,13 @@ class FieldEntry(BaseModel):
     qc: Optional[QCEntry] = Field(
         None, description="Optional quality control parameters"
     )
+
+    def __post_init__(self):
+        """
+        Checking that the ucd, if it exists, is valid.
+        """
+        if self.ucd is not None:
+            check_ucd(self.ucd)
 
 
 class V1P0(BaseModel):
