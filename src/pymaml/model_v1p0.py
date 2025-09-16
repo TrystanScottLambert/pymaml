@@ -66,7 +66,9 @@ class FieldEntry(BaseModel):
     array_size: Optional[Union[int, str]] = Field(
         None, description="Optional max length of string"
     )
-    qc: Optional[QCEntry] = Field(None, description="Optional quality control parameters")
+    qc: Optional[QCEntry] = Field(
+        None, description="Optional quality control parameters"
+    )
 
 
 class V1P0(BaseModel):
@@ -103,6 +105,6 @@ class V1P0(BaseModel):
         None, description="Optional keyword tag"
     )
     MAML_version: float = Field(
-        1.0, const=True, description="Optional version of the MAML schema"
+        1.0, literal=True, description="Optional version of the MAML schema"
     )
     fields: List[FieldEntry]

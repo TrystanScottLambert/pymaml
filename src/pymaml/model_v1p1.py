@@ -119,6 +119,6 @@ class V1P1(BaseModel):
     keyarray: Optional[List[KeyValueEntry]] = None
     extra: Optional[Dict[str, Any]] = None
     MAML_version: float = Field(
-        1.1, const=True, description="Optional version of the MAML schema"
+        1.1, literal=True, description="Optional version of the MAML schema"
     )
     fields: List[FieldEntry]
