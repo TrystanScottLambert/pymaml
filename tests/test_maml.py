@@ -127,8 +127,6 @@ class TestBuilder(unittest.TestCase):
             "fields": [{"name": "test", "data_type": "random"},
                        {"name": "another test", "unit": "km/s", "data_type": "random"}],
         }
-        print(maml.to_dict(include_none=False))
-        print(ans_dict)
         self.assertDictEqual(maml.to_dict(include_none=False), ans_dict)
 
 

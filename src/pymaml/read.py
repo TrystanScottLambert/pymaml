@@ -5,7 +5,7 @@ import warnings
 import os
 
 import yaml
-
+from yaml.parser import ParserError
 
 warnings.formatwarning = lambda msg, *args, **kwargs: f"{msg}\n"
 
@@ -22,5 +22,11 @@ def read_maml(file_name: str) -> dict:
         case _:
             warnings.warn("WARNING: Attempting to read in file but extension is not valid.")
     with open(file_name, encoding='utf8') as file:
-        maml_dict = yaml.safe_load(file)
+        try:
+            maml_dict = yaml.safe_load(file)
+        except ParserError as exc:
+            raise ValueError("File is not even valid YAML. Failed to read.") from exc
+    if not maml_dict:
+        warnings.warn("FILE IS EMPTY!")
+        maml_dict = {}
     return maml_dict
