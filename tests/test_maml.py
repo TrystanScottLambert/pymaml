@@ -2,9 +2,12 @@
 Test maml
 """
 
+import os
 import unittest
-from pymaml import MAML
-from pymaml.maml import Field
+import yaml
+
+from pymaml.maml import MAML, MAMLBuilder, _assert_version
+from pymaml import V1P1
 
 
 class TestMAML(unittest.TestCase):
@@ -12,80 +15,136 @@ class TestMAML(unittest.TestCase):
     Main testing class
     """
 
-    def test_default(self):
+    def test_read_from_file(self):
         """
-        Testing that the default generation is sufficient.
+        Testing that the class can be constructed from a valid maml file.
         """
-        result = MAML.default()
-        result = result.__dict__
-        answer = {
-            "table": "Table Name",
-            "author": "Lead Author <email>",
-            "fields": [
-                Field(
-                    name="RA",
-                    data_type="float",
-                    unit="deg",
-                    info="Right Ascension",
-                    ucd="pos.eq.ra",
-                ),
-                Field(
-                    name="Dec",
-                    data_type="float",
-                    unit="deg",
-                    info="Declination",
-                    ucd="pos.eq.dec",
-                ),
-            ],
-            "survey": "Survey Name",
-            "dataset": "Dataset Name",
-            "version": "0.0.1",
-            "date": "1995-12-09",
-            "coauthors": ["Co-Author 1 <email1>", "Co-Author 2 <email2>"],
-            "depends": [
-                "Dataset 1 depends on [optional]",
-                "Dataset 2 depends on [optional]",
-            ],
-            "description": "A couple sentences about the table.",
-            "comments": ["Something 1", "Something 2"],
-        }
-        for res, ans in zip(result, answer):
-            self.assertEqual(res, ans)
+        test_maml_10 = MAML.from_file("tests/example_v1p0.maml", "v1.0")
+        test_maml_11 = MAML.from_file("tests/example_v1p1.maml", "v1.1")
 
-    def test_set_date(self):
-        """
-        Testing that the set date will only accept correct formats.
-        """
-        maml = MAML.default()
+        self.assertEqual(test_maml_10.version, "v1.0")
+        self.assertEqual(
+            test_maml_10.meta.version, "Required version (string, integer, or float)"
+        )
 
-        # Check for correct date format
-        maml.set_date("2025-01-01")
-        self.assertEqual(maml.date, "2025-01-01")
+        self.assertEqual(test_maml_11.meta.keywords, ["Optional keyword tag", "..."])
+        self.assertEqual(len(test_maml_11.meta.keyarray), 3)
 
-        # Check that error is raised for incorrect format.
+    def test_created_from_dict(self):
+        """
+        Testing that object can be created from a dictionary
+        """
+        with open("tests/example_v1p1.maml", encoding="utf8") as file:
+            example_dict = yaml.safe_load(file)
+
+        test_maml = MAML(example_dict, "v1.1")
+        from_file_maml = MAML.from_file("tests/example_v1p1.maml", "v1.1")
+        ans_dict = from_file_maml.__dict__
+        res_dict = test_maml.__dict__
+        self.assertDictEqual(ans_dict, res_dict)
+
+    def test_to_file(self):
+        """
+        Testing that the to_file creates valid maml.
+        """
+        test_maml = MAML.from_file("tests/example_v1p0.maml", "v1.0")
+        test_maml.to_file("test.maml")
         with self.assertRaises(ValueError):
-            maml.set_date("2025-13-01")
+            test_maml.to_file("test.notgoingtowork")
+        read_back_in = MAML.from_file("test.maml", "v1.0")
+        self.assertDictEqual(test_maml.__dict__, read_back_in.__dict__)
+        os.remove("test.maml")
 
-    def test_set_field(self):
+    def test_to_dict(self):
         """
-        Checking that we can append a field and all errors occur when we need them to.
+        Testing that the object can be represented as a dictionary
         """
-        maml = MAML.default()
-        fields = maml.fields
+        example_file = "tests/example_v1p1.maml"
+        test_maml = MAML.from_file(example_file, "v1.1")
+        res_dict = test_maml.to_dict()
 
-        # Simple add
-        maml.add_field(name="redshift", data_type="float")
-        fields.append(Field(name="redshift", data_type="float"))
-        self.assertEqual(fields, maml.fields)
+        with open(example_file, encoding="utf8") as file:
+            ans_dict = yaml.safe_load(file)
+        self.assertDictEqual(ans_dict, res_dict)
 
-        # Check that invalid ucd isn't accepted
-        with self.assertRaises(AttributeError):
-            maml.add_field(name='test', data_type='test', ucd = 'not.valid.hello')
 
-    def test_add_comment(self):
+class TestBuilder(unittest.TestCase):
+    """
+    Main class testing the Builder pattern is working correctly.
+    """
+
+    def test_simple_building(self):
         """
-        Testing that the add comment will parse the string.
+        Testing that initilization, setting, and adding is working correctly.
         """
-        maml = MAML.default()
-        maml.add_comment(5)
-        self.assertEqual(maml.comments[-1], "5")
+        # Init
+        builder = MAMLBuilder("v1.1")
+        self.assertEqual(builder.version, "v1.1")
+        self.assertTrue(isinstance(builder._model_cls, type(V1P1)))
+        self.assertDictEqual(builder._data, {})
+
+        # Setting
+        builder.set("Test", "Something")
+        builder.set("Should", "Work")
+        self.assertDictEqual(builder._data, {"Test": "Something", "Should": "Work"})
+
+        builder.set("Test", "Something Else")
+        self.assertDictEqual(
+            builder._data, {"Test": "Something Else", "Should": "Work"}
+        )
+
+        # Adding
+        builder.add("List", "This should be in a list")
+        builder.add("List", "So should this")
+        builder.add("another_list", "only this one in the list")
+        ans_dict = {
+            "Test": "Something Else",
+            "Should": "Work",
+            "List": ["This should be in a list", "So should this"],
+            "another_list": ["only this one in the list"],
+        }
+        self.assertDictEqual(builder._data, ans_dict)
+
+    def test_build(self):
+        """
+        Test building a valid maml.
+        """
+        builder = MAMLBuilder("v1.0")
+        builder.set("version", "beta")
+        builder.set("table", "Name of Table")
+        builder.set("date", "2025-09-11")
+        builder.add("fields", {"name": "test", "data_type": "random"})
+        builder.set("author", "ME")
+        builder.add("fields", {"name": "another test", "unit": "km/s", "data_type": "random"})
+        maml = builder.build()
+
+        ans_dict = {
+            "table": "Name of Table",
+            "version": "beta",
+            "date": "2025-09-11",
+            "author": "ME",
+            'MAML_version': 1.0,
+            "fields": [{"name": "test", "data_type": "random"},
+                       {"name": "another test", "unit": "km/s", "data_type": "random"}],
+        }
+        self.assertDictEqual(maml.to_dict(include_none=False), ans_dict)
+
+
+class TestAssertVersion(unittest.TestCase):
+    """
+    Testing that the _assert_version will crash correctly for wrong versions
+    """
+
+    def test_valid(self):
+        """When the value is correct"""
+        _assert_version("v1.0")
+        _assert_version("v1.1")
+        self.assertEqual(1, 1)
+
+    def test_not_valid(self):
+        """When the value is not correct"""
+        self.assertRaises(ValueError, _assert_version, "v1p1")
+
+
+if __name__ == "__main__":
+    unittest.main()

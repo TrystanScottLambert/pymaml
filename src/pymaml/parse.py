@@ -3,34 +3,18 @@ Helper module to parse and check valid maml data structures.
 """
 
 import datetime
-import os
-import yaml
-from rich.console import Console
-from rich.text import Text
-from astropy.io.votable.ucd import check_ucd
 
-REQUIRED_META_DATA = ["table", "version", "date", "author", "fields"]
-RECOMENDED_META_DATA = ["dataset", "description"]
-OPTIONAL_META_DATA = ["survey", "coauthors", "depends", "comments"]
+from pydantic_core import ValidationError
 
-REQURED_FIELD_META_DATA = ["name", "data_type"]
-RECOMENDED_FIELD_META_DATA = ["unit", "info", "ucd"]
-OPTIONAL_FIELD_META_DATA = ["array_size"]
-FIELD_KEY_ORDER = ["name", "unit", "info", "ucd", "data_type"]
+from .model_v1p0 import V1P0
+from .model_v1p1 import V1P1
+from .read import read_maml
 
-MAML_KEY_ORDER = [
-    "survey",
-    "dataset",
-    "table",
-    "version",
-    "date",
-    "author",
-    "coauthors",
-    "depends",
-    "description",
-    "comments",
-    "fields",
-]
+
+MODELS = {
+    "v1.0": V1P0,
+    "v1.1": V1P1,
+}
 
 
 def today() -> str:
@@ -51,114 +35,28 @@ def is_iso8601(date: str) -> bool:
         return False
 
 
-def is_valid(maml_data: dict[str:str]) -> bool:
+def _assert_version(version: str) -> None:
     """
-    Checks if the dict is a valid representation of maml data
+    Determines if the version is supported and crashes if it isn't.
     """
-    if not isinstance(maml_data, dict):
-        return False
-    try:
-        for required in REQUIRED_META_DATA:
-            _ = maml_data[required]
-
-        fields = maml_data["fields"]
-        for field in fields:
-            for required in REQURED_FIELD_META_DATA:
-                _ = field[required]
-    except KeyError:
-        return False
-
-    return is_iso8601(maml_data["date"])
+    if version not in MODELS:
+        raise ValueError(
+            f"{version} is not a valid version. Supported MAML versions: {list(MODELS.keys())}"
+        )
 
 
-
-console = Console()
-
-
-def validate(file_path: str) -> dict:
+def valid_for(file_name: str) -> list[str]:
     """
-    Validate a .maml (YAML) file against the MAML schema.
-    Prints a colored report using Rich.
-    Returns a dict containing 'errors' and 'warnings'.
+    Reads in a file and determines if it is valid for versions of maml.
     """
-
-    report = {"errors": [], "warnings": []}
-
-    # --- Check extension ---
-    _, ext = os.path.splitext(file_path)
-    if ext not in (".maml", ".yml"):
-        report["errors"].append(f"File extension {ext} is not valid (expected .maml)")
-    elif ext == ".yml":
-        report["warnings"].append("File uses .yml extension instead of .maml")
-
-    # --- Try to load YAML ---
-    try:
-        with open(file_path, encoding='utf8') as f:
-            data = yaml.safe_load(f)
-    except Exception as e:
-        report["errors"].append(f"YAML parsing error: {e}")
-        data = None
-
-    if not isinstance(data, dict):
-        report["errors"].append("Top-level YAML is not a dictionary")
-        data = {}
-
-    # --- Check required metadata ---
-    for key in REQUIRED_META_DATA:
-        if key not in data:
-            report["errors"].append(f"Missing required field: {key}")
-
-    for key in RECOMENDED_META_DATA:
-        if key not in data:
-            report["warnings"].append(f"Missing recommended field: {key}")
-
-    # --- Check date ---
-    if "date" in data and not is_iso8601(data["date"]):
-        report["errors"].append(f"Date '{data['date']}' is not ISO 8601 (YYYY-MM-DD)")
-
-    # --- Check fields ---
-    fields = data.get("fields", [])
-    if not isinstance(fields, list) or not fields:
-        report["errors"].append("`fields` must be a non-empty list")
-    else:
-        all_units_none = True
-        for i, field in enumerate(fields, start=1):
-            # required keys
-            for req in REQURED_FIELD_META_DATA:
-                if req not in field:
-                    report["errors"].append(f"Field {i} missing required key: {req}")
-
-            # recommended keys
-            for rec in RECOMENDED_FIELD_META_DATA:
-                if rec not in field:
-                    report["warnings"].append(f"Field {i} missing recommended key: {rec}")
-
-            # unit check
-            if field.get("unit") not in (None, "", " "):
-                all_units_none = False
-
-            # UCD validation
-            if "ucd" in field and field["ucd"] is not None:
-                if not check_ucd(field["ucd"], check_controlled_vocabulary=True):
-                    report["errors"].append(
-                        f"Field {i} has invalid UCD: {field['ucd']}"
-                    )
-
-        if all_units_none:
-            report["warnings"].append("All fields are missing `unit` values")
-
-    # --- Print results ---
-    for err in report["errors"]:
-        console.print(Text(err, style="bold red"))
-
-    for warn in report["warnings"]:
-        console.print(Text(warn, style="yellow"))
-
-    if report["errors"]:
-        console.print(Text("NOT VALID", style="bold red"))
-    elif report["warnings"]:
-        console.print(Text("VALID (with warnings)", style="yellow"))
-    else:
-        console.print(Text("VALID", style="green"))
-
-    return report
+    dictionary = read_maml(file_name)
+    valid = []
+    for version, model in MODELS.items():
+        try:
+            model(**dictionary)
+            valid.append(version)
+        except ValidationError:
+            pass
+    if not valid:
+        return ["Not valid for any version of MAML"]
+    return valid

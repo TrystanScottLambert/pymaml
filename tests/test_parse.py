@@ -5,7 +5,7 @@ Tests for the parse module
 import unittest
 import datetime
 
-from pymaml import is_iso8601, is_valid
+from pymaml import is_iso8601, valid_for
 
 class TestIsISO8601(unittest.TestCase):
     """Testing correct iso dates are validated correctly"""
@@ -32,54 +32,26 @@ class TestIsISO8601(unittest.TestCase):
                 self.assertFalse(is_iso8601(d))
 
 
-class TestIsValid(unittest.TestCase):
-    """Testing that the valid maml function works correcly"""
-    def make_valid_maml(self, date=None):
-        """Helper to create a minimal valid maml dict"""
-        if date is None:
-            date = datetime.date.today().isoformat()
-        return {
-            "table": "my_table",
-            "version": "1.0",
-            "date": date,
-            "author": "Dr. Example",
-            "fields": [
-                {"name": "flux", "data_type": "float"}
-            ],
-        }
+class TestValidFor(unittest.TestCase):
+    """Testing the valid for function"""
+    def test_valid_v10(self):
+        """Testing that earlier versions are still validated by later versions"""
+        valids = valid_for("tests/example_v1p0.maml")
+        self.assertEqual(len(valids), 2)
+        self.assertEqual(valids[0], "v1.0")
+        self.assertEqual(valids[1], "v1.1")
 
-    def test_valid_dict(self):
-        """Valid maml dict should return True"""
-        data = self.make_valid_maml()
-        self.assertTrue(is_valid(data))
+    def test_valid_v11(self):
+        """Testing that for later versions only later versions pass."""
+        valids = valid_for("tests/example_v1p1.maml")
+        self.assertEqual(len(valids), 1)
+        self.assertEqual(valids[0], "v1.1")
 
-    def test_not_a_dict(self):
-        """Non-dict input should return False"""
-        for bad in [None, [], "string", 42]:
-            with self.subTest(value=bad):
-                self.assertFalse(is_valid(bad))
-
-    def test_missing_required_top_level_keys(self):
-        """Missing required metadata keys should return False"""
-        for missing in ["table", "version", "date", "author", "fields"]:
-            data = self.make_valid_maml()
-            data.pop(missing)
-            with self.subTest(missing=missing):
-                self.assertFalse(is_valid(data))
-
-    def test_missing_required_field_keys(self):
-        """Missing required keys inside fields should return False"""
-        for missing in ["name", "data_type"]:
-            data = self.make_valid_maml()
-            data["fields"][0].pop(missing)
-            with self.subTest(missing=missing):
-                self.assertFalse(is_valid(data))
-
-    def test_invalid_date(self):
-        """Invalid date should return False"""
-        data = self.make_valid_maml(date="not-a-date")
-        self.assertFalse(is_valid(data))
-
+    def test_not_valid(self):
+        """Testing that when we pass non valid stuff that a non valid arises."""
+        valids = valid_for("tests/invalid.maml")
+        self.assertEqual(len(valids), 1)
+        self.assertEqual("Not valid for any version of MAML", valids[0])
 
 if __name__ == "__main__":
     unittest.main()

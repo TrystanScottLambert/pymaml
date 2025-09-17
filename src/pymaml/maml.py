@@ -2,141 +2,64 @@
 Main maml object.
 """
 
-import warnings
-from dataclasses import dataclass, asdict
 import os
 
 import yaml
 from yaml import SafeDumper
-from astropy.io.votable.ucd import check_ucd
 
-from .parse import (
-    today,
-    is_valid,
-    is_iso8601,
-    RECOMENDED_META_DATA,
-    OPTIONAL_META_DATA,
-    MAML_KEY_ORDER,
-    FIELD_KEY_ORDER,
-    RECOMENDED_FIELD_META_DATA,
-    REQURED_FIELD_META_DATA,
-    OPTIONAL_FIELD_META_DATA,
-)
+
 from .read import read_maml
+from .model_v1p0 import V1P0
+from .model_v1p1 import V1P1
+from .parse import MODELS, _assert_version
 
 
-@dataclass
-class Field:
-    """
-    Class storing the field data
-    """
 
-    name: str
-    data_type: str
-    unit: str = None
-    info: str = None
-    ucd: str = None
-    array_size: int = None
+def _remove_nones(obj):
+    if isinstance(obj, dict):
+        return {
+            k: _remove_nones(v)
+            for k, v in obj.items()
+            if v is not None
+        }
+    if isinstance(obj, list):
+        return [_remove_nones(v) for v in obj if v is not None]
+    return obj
 
-    def __post_init__(self):
-        if self.ucd is not None:
-            if not check_ucd(self.ucd, check_controlled_vocabulary=True):
-                raise AttributeError(f"{self.ucd} is not valid ucd.")
-
-    @classmethod
-    def from_dict(cls, dictionary: dict[str, str]):
-        """
-        Constructs a field object from a dictionary.
-        """
-        value = cls(name=None, data_type=None)
-        for req in REQURED_FIELD_META_DATA:
-            if req in dictionary:
-                setattr(value, req, dictionary[req])
-            else:
-                raise ValueError(f"{req} missing for a valid Field entry.")
-
-        for rec in RECOMENDED_FIELD_META_DATA:
-            if rec in dictionary:
-                setattr(value, rec, dictionary[rec])
-            else:
-                warnings.warn(
-                    f"Recomended property '{rec}' not in dictionary for {dictionary["name"]} field"
-                )
-
-        for opt in OPTIONAL_FIELD_META_DATA:
-            if opt in dictionary:
-                setattr(value, opt, dictionary[opt])
-
-        try:
-            ucd = dictionary["ucd"]
-            if not check_ucd(ucd, check_controlled_vocabulary=True):
-                raise AttributeError(f"{ucd} is not valid ucd")
-            value.ucd = ucd
-        except KeyError:
-            pass
-
-        return value
-
-
-@dataclass
 class MAML:
     """
-    Class for storing maml data.
+    Main MAML class
     """
 
-    table: str
-    author: str
-    fields: list[Field]
-    survey: str = None
-    dataset: str = None
-    version: str = "0.1.0"
-    date: str = today()
-    coauthors: list[str] = None
-    depends: list[str] = None
-    description: str = None
-    comments: list[str] = None
+    def __init__(self, data: dict, version):
+        """
+        Initializaing and checking that the version is supported
+        """
+        _assert_version(version)
+        self.version = version
+        self.meta = MODELS[version](**data)
 
     @classmethod
-    def from_file(cls, file_name: str) -> None:
+    def from_file(cls, file_name: str, version: str) -> "MAML":
         """
-        Creates a MAML object from file.
+        Creates a new maml object from file.
         """
-        dictionary = read_maml(file_name)
-        if not is_valid(dictionary):
-            raise AttributeError(f"{file_name} is not a valid maml file.")
+        _assert_version(version)
+        data = read_maml(file_name)
+        return cls(data, version)
 
-        fields = [Field.from_dict(field) for field in dictionary["fields"]]
-        value = cls(
-            table=dictionary["table"], author=dictionary["author"], fields=fields
-        )
-
-        for recommended in RECOMENDED_META_DATA:
-            if recommended in dictionary:
-                setattr(value, recommended, dictionary[recommended])
-            else:
-                warnings.warn(f"Recommended value {recommended} not found in file.")
-
-        for optional in OPTIONAL_META_DATA:
-            if optional in dictionary:
-                setattr(value, optional, dictionary[optional])
-
-        return value
-
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self, include_none: bool = True) -> dict:
         """
-        Dictionary representation of the MAML class.
+        Returns dictionary represenation of the model base class.
         """
-        raw_dictionary = asdict(self)
-        ordered_fields = []
-        for field in raw_dictionary["fields"]:
-            ordered_fields.append({key: field[key] for key in FIELD_KEY_ORDER})
-        raw_dictionary["fields"] = ordered_fields
-        ordered_dictionary = {key: raw_dictionary[key] for key in MAML_KEY_ORDER}
-        return ordered_dictionary
+        raw = self.meta.model_dump(mode="json")
+        if not include_none:
+            return _remove_nones(raw)
+        return raw
 
-    def to_file(self, file_name: str) -> None:
+    def to_file(self, file_name: str) -> dict:
         """
-        Writes the current fields as valid maml.
+        Creates a dictionary representation of the base model.
         """
         SafeDumper.add_representer(
             type(None),
@@ -150,63 +73,37 @@ class MAML:
                 self.to_dict(), file, sort_keys=False, default_flow_style=False
             )
 
-    @classmethod
-    def default(cls):
-        """
-        Creates a default implementation.
-        """
-        return cls(
-            table="Table Name",
-            survey="Survey Name",
-            dataset="Dataset Name",
-            version="0.0.1",
-            date="1995-12-09",
-            author="Lead Author <email>",
-            coauthors=["Co-Author 1 <email1>", "Co-Author 2 <email2>"],
-            depends=[
-                "Dataset 1 depends on [optional]",
-                "Dataset 2 depends on [optional]",
-            ],
-            description="A couple sentences about the table.",
-            comments=["Something 1", "Something 2"],
-            fields=[
-                Field("RA", "float", "deg", "Right Ascension", "pos.eq.ra"),
-                Field("Dec", "float", "deg", "Declination", "pos.eq.dec"),
-            ],
-        )
 
-    def add_field(
-        self,
-        name: str,
-        data_type: str,
-        unit: str = None,
-        info: str = None,
-        ucd: str = None,
-        array_size: int = None,
-    ):
-        """
-        Helper method to add a new field.
-        """
-        validated_field = Field(
-            name=name,
-            data_type=data_type,
-            unit=unit,
-            info=info,
-            ucd=ucd,
-            array_size=array_size,
-        )
-        self.fields.append(validated_field)
+class MAMLBuilder:
+    """
+    Builder pattern for constructing the MAML format based on whatever version is decided.
+    """
 
-    def add_comment(self, comment: str):
+    def __init__(self, version: str):
         """
-        Helper method to add comments
+        Initializing and checking version is valid.
         """
-        self.comments.append(str(comment))
+        _assert_version(version)
+        self.version: str = version
+        self._model_cls = MODELS[version]
+        self._data: dict = {}
 
-    def set_date(self, date: str) -> None:
+    def set(self, field, value):
         """
-        Helper method which sets the date if it is in the correct format.
+        For setting scalar values
         """
-        if not is_iso8601(date):
-            raise ValueError(f"'{date}' is not in ISO8601 format")
-        self.date = date
+        self._data[field] = value
+        return self
+
+    def add(self, field, value):
+        """
+        For adding vector values
+        """
+        self._data.setdefault(field, []).append(value)
+        return self
+
+    def build(self):
+        """
+        Attempts to build the class for the current version
+        """
+        return MAML(self._data, self.version)

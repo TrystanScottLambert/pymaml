@@ -1,21 +1,16 @@
 # src/pymaml/__init__.py
 
-# Import the main classes from maml.py
-from .maml import Field, MAML
-
-# Import the constants from parse.py (these are what your tests are looking for)
-from .parse import FIELD_KEY_ORDER, MAML_KEY_ORDER, is_valid, is_iso8601
-
-# Import functions from read.py
+from .maml import MAML
+from .parse import is_iso8601, valid_for
 from .read import read_maml
+from .model_v1p0 import V1P0
+from .model_v1p1 import V1P1
 
-# Export everything your tests and users need
 __all__ = [
-    "Field",
     "MAML", 
-    "FIELD_KEY_ORDER",
-    "MAML_KEY_ORDER",
-    "is_valid",
     "read_maml",
     "is_iso8601",
+    "V1P0",
+    "V1P1",
+    "valid_for",
 ]
