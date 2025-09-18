@@ -7,7 +7,7 @@ import unittest
 import yaml
 
 from pymaml.maml import MAML, MAMLBuilder, _assert_version
-from pymaml import V1P1
+from pymaml import V1P1, today
 
 
 class TestMAML(unittest.TestCase):
@@ -115,7 +115,9 @@ class TestBuilder(unittest.TestCase):
         builder.set("date", "2025-09-11")
         builder.add("fields", {"name": "test", "data_type": "random"})
         builder.set("author", "ME")
-        builder.add("fields", {"name": "another test", "unit": "km/s", "data_type": "random"})
+        builder.add(
+            "fields", {"name": "another test", "unit": "km/s", "data_type": "random"}
+        )
         maml = builder.build()
 
         ans_dict = {
@@ -123,9 +125,11 @@ class TestBuilder(unittest.TestCase):
             "version": "beta",
             "date": "2025-09-11",
             "author": "ME",
-            'MAML_version': 1.0,
-            "fields": [{"name": "test", "data_type": "random"},
-                       {"name": "another test", "unit": "km/s", "data_type": "random"}],
+            "MAML_version": 1.0,
+            "fields": [
+                {"name": "test", "data_type": "random"},
+                {"name": "another test", "unit": "km/s", "data_type": "random"},
+            ],
         }
         self.assertDictEqual(maml.to_dict(include_none=False), ans_dict)
 
@@ -144,6 +148,39 @@ class TestAssertVersion(unittest.TestCase):
     def test_not_valid(self):
         """When the value is not correct"""
         self.assertRaises(ValueError, _assert_version, "v1p1")
+
+
+class TestBuilderDefaults(unittest.TestCase):
+    """
+    Testing that the buiders work with defaults.
+    """
+
+    def test_v10(self):
+        """Testing that version 1.0 generates defaults with the builder."""
+        builder = MAMLBuilder("v1.0", defaults=True)
+        res = builder._data
+        self.assertEqual(res["table"], "__REQUIRED__: Table Name")
+        self.assertEqual(res["version"], "__REQUIRED__: 0.1.0")
+        self.assertEqual(res["date"], today())
+        self.assertEqual(res["author"], "__REQUIRED__: Main Author")
+        self.assertEqual(len(res["fields"]), 1)
+        self.assertEqual(res["fields"][0]["name"], "__REQUIRED__: field name")
+        self.assertEqual(res["fields"][0]["data_type"], "__REQUIRED__: data_type")
+        with self.assertRaises(KeyError):
+            _ = res["keyarray"]
+
+    def test_v11(self):
+        """Testing that version 1.1 generates defaults with the builder."""
+        builder = MAMLBuilder("v1.1", defaults=True)
+        res = builder._data
+        self.assertEqual(res["table"], "__REQUIRED__: Table Name")
+        self.assertEqual(res["version"], "__REQUIRED__: 0.1.0")
+        self.assertEqual(res["date"], today())
+        self.assertEqual(res["author"], "__REQUIRED__: Main Author")
+        self.assertEqual(len(res["fields"]), 1)
+        self.assertEqual(res["fields"][0]["name"], "__REQUIRED__: field name")
+        self.assertEqual(res["fields"][0]["data_type"], "__REQUIRED__: data_type")
+        self.assertIsNone(res["keyarray"])
 
 
 if __name__ == "__main__":

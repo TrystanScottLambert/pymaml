@@ -1,6 +1,7 @@
 """
 Main module for reading maml files.
 """
+
 import warnings
 import os
 
@@ -9,19 +10,22 @@ from yaml.parser import ParserError
 
 warnings.formatwarning = lambda msg, *args, **kwargs: f"{msg}\n"
 
+
 def read_maml(file_name: str) -> dict:
     """
     Reads in a maml file and warns for strange extensions.
     """
     _, extension = os.path.splitext(file_name)
     match extension:
-        case '.yml' | '.yaml':
+        case ".yml" | ".yaml":
             warnings.warn("WARNING: File was read in but this is a .yml not a .maml\n")
-        case '.maml':
+        case ".maml":
             pass
         case _:
-            warnings.warn("WARNING: Attempting to read in file but extension is not valid.")
-    with open(file_name, encoding='utf8') as file:
+            warnings.warn(
+                "WARNING: Attempting to read in file but extension is not valid."
+            )
+    with open(file_name, encoding="utf8") as file:
         try:
             maml_dict = yaml.safe_load(file)
         except ParserError as exc:

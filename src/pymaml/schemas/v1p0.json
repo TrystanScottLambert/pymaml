@@ -16,7 +16,10 @@
       "description": "Required table name"
     },
     "version": {
-      "type": ["string", "number"],
+      "type": [
+        "string",
+        "number"
+      ],
       "description": "Required version (string, integer, or float)"
     },
     "date": {
@@ -30,17 +33,29 @@
     },
     "coauthors": {
       "oneOf": [
-              { "type": "string"},
-              { "type": "array", "items": { "type": "string"} },
-              { "type": "null" }
-             ],
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Optional coauthor name and optionally <email>"
     },
     "DOIs": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["DOI", "type"],
+        "required": [
+          "DOI",
+          "type"
+        ],
         "properties": {
           "DOI": {
             "type": "string",
@@ -57,7 +72,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["table"],
+        "required": [
+          "table"
+        ],
         "properties": {
           "survey": {
             "type": "string",
@@ -72,7 +89,10 @@
             "description": "The name of the dependent table."
           },
           "version": {
-            "type": ["string", "number"],
+            "type": [
+              "string",
+              "number"
+            ],
             "description": "The version of the dependent table."
           }
         }
@@ -84,22 +104,43 @@
     },
     "comments": {
       "oneOf": [
-              { "type": "string"},
-              { "type": "array", "items": { "type": "string"} },
-              { "type": "null" }
-             ],
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Optional comment or interesting fact"
     },
     "license": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Recommended license for the data"
     },
     "keywords": {
       "oneOf": [
-              { "type": "string"},
-              { "type": "array", "items": { "type": "string"} },
-              { "type": "null" }
-             ],
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Optional keyword tag"
     },
     "MAML_version": {
@@ -111,26 +152,44 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "data_type"],
+        "required": [
+          "name",
+          "data_type"
+        ],
         "properties": {
           "name": {
             "type": "string",
             "description": "Required field name"
           },
           "unit": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Recommended unit of measurement"
           },
           "info": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Recommended short description"
           },
           "ucd": {
             "oneOf": [
-              { "type": "string"},
-              { "type": "array", "items": { "type": "string"} },
-              { "type": "null" }
-             ],
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
             "description": "Recommended UCD string"
           },
           "data_type": {
@@ -138,15 +197,40 @@
             "description": "Required data type (e.g., int32, string, bool, double)"
           },
           "array_size": {
-            "type": ["integer", "string", "null"],
+            "type": [
+              "integer",
+              "string",
+              "null"
+            ],
             "description": "Optional max length of string"
           },
           "qc": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "properties": {
-              "min": { "type": ["number", "string", "null"] },
-              "max": { "type": ["number", "string", "null"] },
-              "miss": { "type": ["number", "string", "null"] }
+              "min": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "max": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "miss": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
             },
             "description": "Optional quality control parameters"
           }
@@ -154,6 +238,12 @@
       }
     }
   },
-  "required": ["table", "version", "date", "author", "fields"],
+  "required": [
+    "table",
+    "version",
+    "date",
+    "author",
+    "fields"
+  ],
   "additionalProperties": false
 }

@@ -15,6 +15,8 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, field_validator
 from astropy.io.votable.ucd import check_ucd
 
+from .date_funcs import today
+
 
 class DOIEntry(BaseModel):
     """
@@ -146,11 +148,11 @@ class V1P1(BaseModel):
         return cls(
             table="__REQUIRED__: Table Name",
             version="__REQUIRED__: 0.1.0",
-            date="__REQUIRED__: 1995-09-12",
-            author="__REQUIRED__: ",
+            date=today(),
+            author="__REQUIRED__: Main Author",
             fields=[
                 FieldEntry(
-                    name="__REQUIRED__: field name", data_type="__REQUIRED__: float"
+                    name="__REQUIRED__: field name", data_type="__REQUIRED__: data_type"
                 )
             ],
         )
