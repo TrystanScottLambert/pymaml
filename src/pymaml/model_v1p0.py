@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import date as date_aliased
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from astropy.io.votable.ucd import check_ucd
 
 
@@ -71,12 +71,21 @@ class FieldEntry(BaseModel):
         None, description="Optional quality control parameters"
     )
 
-    def __post_init__(self):
-        """
-        Checking that the ucd, if it exists, is valid.
-        """
-        if self.ucd is not None:
-            check_ucd(self.ucd)
+    @field_validator("ucd")
+    @classmethod
+    def validate_ucd(cls, value, info):
+        """Checks that the ucds are valid ucds."""
+        if isinstance(value, list):
+            ucd_string = ";".join(value)
+        else:
+            ucd_string = value
+        if value is not None and not check_ucd(
+            ucd_string, check_controlled_vocabulary=True
+        ):
+            raise ValueError(
+                f"{ucd_string} is not valid UCD in field {info.data['name']}"
+            )
+        return value
 
 
 class V1P0(BaseModel):
@@ -116,3 +125,18 @@ class V1P0(BaseModel):
         1.0, literal=True, description="Optional version of the MAML schema"
     )
     fields: List[FieldEntry]
+
+    @classmethod
+    def with_defaults(cls) -> "V1P0":
+        """Factory that builds valid blank defaults."""
+        return cls(
+            table="__REQUIRED__: Table Name",
+            version="__REQUIRED__: 0.1.0",
+            date="__REQUIRED__: 1995-09-12",
+            author="__REQUIRED__: ",
+            fields=[
+                FieldEntry(
+                    name="__REQUIRED__: field name", data_type="__REQUIRED__: float"
+                )
+            ],
+        )
