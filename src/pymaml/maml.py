@@ -106,3 +106,16 @@ class MAMLBuilder:
         Attempts to build the class for the current version
         """
         return MAML(self._data, self.version)
+
+    def __str__(self) -> str:
+        """
+        String represenation showing the current state of the dictionary
+        """
+        return f"Builder(version = {self.version}, current_build = {self._data})"
+
+    def possible_metadata(self) -> list[str]:
+        """
+        Lists all the values that can be added in this schema.
+        """
+        all_values = self._model_cls.with_defaults().model_dump(mode="json").keys()
+        return list(all_values)

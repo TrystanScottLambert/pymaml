@@ -183,5 +183,39 @@ class TestBuilderDefaults(unittest.TestCase):
         self.assertIsNone(res["keyarray"])
 
 
+class TestMAMLBuilderHelpers(unittest.TestCase):
+    """
+    Testing all the MAML builder helper functions
+    """
+
+    def test_listing_meta_data(self):
+        """
+        Testing that all the possible fields are listed out for the user.
+        """
+        builder = MAMLBuilder("v1.1")
+        res = builder.possible_metadata()
+        ans = [
+            "survey",
+            "dataset",
+            "table",
+            "version",
+            "date",
+            "author",
+            "coauthors",
+            "DOIs",
+            "depends",
+            "description",
+            "comments",
+            "license",
+            "keywords",
+            "keyarray",
+            "extra",
+            "MAML_version",
+            "fields",
+        ]
+        for r, a in zip(res, ans):
+            self.assertEqual(r, a)
+        print('Test a print')
+
 if __name__ == "__main__":
     unittest.main()
