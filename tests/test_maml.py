@@ -215,7 +215,7 @@ class TestMAMLBuilderHelpers(unittest.TestCase):
         ]
         for r, a in zip(res, ans):
             self.assertEqual(r, a)
-        print('Test a print')
+
 
 if __name__ == "__main__":
     unittest.main()

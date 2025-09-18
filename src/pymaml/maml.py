@@ -67,6 +67,10 @@ class MAML:
                 self.to_dict(), file, sort_keys=False, default_flow_style=False
             )
 
+    def __str__(self) -> str:
+        data = self.meta.model_dump(mode="json")
+        return f"MAML(version = {self.version}, metadata = {data})"
+
 
 class MAMLBuilder:
     """
