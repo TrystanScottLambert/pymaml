@@ -6,6 +6,8 @@ import os
 import unittest
 import yaml
 
+import pandas as pd
+
 from pymaml.maml import MAML, MAMLBuilder, _assert_version
 from pymaml import V1P1, today
 
@@ -181,6 +183,94 @@ class TestBuilderDefaults(unittest.TestCase):
         self.assertEqual(res["fields"][0]["name"], "__REQUIRED__: field name")
         self.assertEqual(res["fields"][0]["data_type"], "__REQUIRED__: data_type")
         self.assertIsNone(res["keyarray"])
+
+
+class TestMAMLBuilderHelpers(unittest.TestCase):
+    """
+    Testing all the MAML builder helper functions
+    """
+
+    def test_listing_meta_data(self):
+        """
+        Testing that all the possible fields are listed out for the user.
+        """
+        builder = MAMLBuilder("v1.1")
+        res = builder.possible_metadata()
+        ans = [
+            "survey",
+            "dataset",
+            "table",
+            "version",
+            "date",
+            "author",
+            "coauthors",
+            "DOIs",
+            "depends",
+            "description",
+            "comments",
+            "license",
+            "keywords",
+            "keyarray",
+            "extra",
+            "MAML_version",
+            "fields",
+        ]
+        for r, a in zip(res, ans):
+            self.assertEqual(r, a)
+
+    def test_adding(self):
+        """Testing that we can edit list entries using the edit method."""
+        builder = MAMLBuilder("v1.1", defaults=True)
+        builder.add("DOIs", "testtest")
+        builder.add("DOIs", "more_tests")
+        self.assertEqual(builder._data['DOIs'][0], "testtest")
+        self.assertEqual(builder._data['DOIs'][1], "more_tests")
+
+class TestBuilderFieldsFromPandas(unittest.TestCase):
+    """Testing that we can build the fields from pandas dataframes"""
+    def setUp(self):
+        self.builder = MAMLBuilder("v1.1")
+
+    def test_basic_dataframe(self):
+        """Simple case"""
+        df = pd.DataFrame({
+            "id": [1, 2, 3],
+            "value": [0.1, 0.2, 0.3],
+            "name": ["a", "b", "c"]
+        })
+
+        self.builder.fields_from_pandas(df)
+
+        expected_fields = [
+            {"name": "id", "data_type": "int64"},
+            {"name": "value", "data_type": "float64"},
+            {"name": "name", "data_type": "object"},
+        ]
+
+        self.assertEqual(self.builder._data["fields"], expected_fields)
+
+    def test_empty_dataframe(self):
+        df = pd.DataFrame()
+
+        self.builder.fields_from_pandas(df)
+
+        # Should stay empty
+        self.assertEqual(self.builder._data.get("fields", []), [])
+
+    def test_weird_column_names(self):
+        df = pd.DataFrame({
+            "Column With Space": [1, 2],
+            "special!char$": ["x", "y"]
+        })
+
+        self.builder.fields_from_pandas(df)
+
+        expected_fields = [
+            {"name": "Column With Space", "data_type": "int64"},
+            {"name": "special!char$", "data_type": "object"},
+        ]
+
+        self.assertEqual(self.builder._data["fields"], expected_fields)
 
 
 if __name__ == "__main__":

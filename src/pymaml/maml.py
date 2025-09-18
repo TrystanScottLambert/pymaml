@@ -7,6 +7,7 @@ import os
 import yaml
 from yaml import SafeDumper
 
+import pandas as pd
 
 from .read import read_maml
 from .parse import MODELS, _assert_version
@@ -67,6 +68,10 @@ class MAML:
                 self.to_dict(), file, sort_keys=False, default_flow_style=False
             )
 
+    def __str__(self) -> str:
+        data = self.meta.model_dump(mode="json")
+        return f"MAML(version = {self.version}, metadata = {data})"
+
 
 class MAMLBuilder:
     """
@@ -87,18 +92,21 @@ class MAMLBuilder:
         else:
             raise ValueError("defaults must be True or False")
 
-    def set(self, field, value):
+    def set(self, field: str, value):
         """
         For setting scalar values
         """
         self._data[field] = value
         return self
 
-    def add(self, field, value):
+    def add(self, field: str, value):
         """
         For adding vector values
         """
-        self._data.setdefault(field, []).append(value)
+        try:
+            self._data.setdefault(field, []).append(value)
+        except AttributeError:
+            self._data[field] = [value]
         return self
 
     def build(self):
@@ -106,3 +114,26 @@ class MAMLBuilder:
         Attempts to build the class for the current version
         """
         return MAML(self._data, self.version)
+
+    def __str__(self) -> str:
+        """
+        String represenation showing the current state of the dictionary
+        """
+        return f"Builder(version = {self.version}, current_build = {self._data})"
+
+    def possible_metadata(self) -> list[str]:
+        """
+        Lists all the values that can be added in this schema.
+        """
+        all_values = self._model_cls.with_defaults().model_dump(mode="json").keys()
+        return list(all_values)
+
+    def fields_from_pandas(self, pandas_dataframe: pd.DataFrame):
+        """
+        Fills in the fields from a pandas dataframe using the column names and types.
+        """
+        field_names = list(pandas_dataframe.columns)
+        data_types = [str(dtype) for dtype in list(pandas_dataframe.dtypes)]
+        for field_name, dtype in zip(field_names, data_types):
+            self.add("fields", {"name": field_name, "data_type": dtype})
+        return self
