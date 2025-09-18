@@ -1,6 +1,7 @@
 """
 Tests for the read module.
 """
+
 import unittest
 import tempfile
 import warnings
@@ -9,8 +10,10 @@ from pathlib import Path
 
 from pymaml import read_maml
 
+
 class TestReadMaml(unittest.TestCase):
     """Testing the read MAML function"""
+
     def setUp(self):
         # Create a temp directory for test files
         self.test_dir = tempfile.TemporaryDirectory()
@@ -43,7 +46,9 @@ class TestReadMaml(unittest.TestCase):
             warnings.simplefilter("always")
             result = read_maml(path)
             self.assertEqual(result, {"a": 1})
-            self.assertTrue(any("this is a .yml not a .maml" in str(warn.message) for warn in w))
+            self.assertTrue(
+                any("this is a .yml not a .maml" in str(warn.message) for warn in w)
+            )
 
     def test_invalid_extension_warns(self):
         """Testing that invalid extensions are warned about but still try to be read in."""
@@ -52,7 +57,9 @@ class TestReadMaml(unittest.TestCase):
             warnings.simplefilter("always")
             result = read_maml(path)
             self.assertEqual(result, {"c": 3})
-            self.assertTrue(any("extension is not valid" in str(warn.message) for warn in w))
+            self.assertTrue(
+                any("extension is not valid" in str(warn.message) for warn in w)
+            )
 
     def test_invalid_yaml_raises_valueerror(self):
         """Testing that non-valid yaml raises an Error"""
@@ -70,6 +77,7 @@ class TestReadMaml(unittest.TestCase):
             result = read_maml(path)
             self.assertEqual(result, {})
             self.assertTrue(any("FILE IS EMPTY!" in str(warn.message) for warn in w))
+
 
 if __name__ == "__main__":
     unittest.main()

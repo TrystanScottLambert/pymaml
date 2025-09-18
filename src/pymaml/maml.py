@@ -9,22 +9,16 @@ from yaml import SafeDumper
 
 
 from .read import read_maml
-from .model_v1p0 import V1P0
-from .model_v1p1 import V1P1
 from .parse import MODELS, _assert_version
-
 
 
 def _remove_nones(obj):
     if isinstance(obj, dict):
-        return {
-            k: _remove_nones(v)
-            for k, v in obj.items()
-            if v is not None
-        }
+        return {k: _remove_nones(v) for k, v in obj.items() if v is not None}
     if isinstance(obj, list):
         return [_remove_nones(v) for v in obj if v is not None]
     return obj
+
 
 class MAML:
     """
@@ -79,14 +73,19 @@ class MAMLBuilder:
     Builder pattern for constructing the MAML format based on whatever version is decided.
     """
 
-    def __init__(self, version: str):
+    def __init__(self, version: str, defaults: bool = False):
         """
         Initializing and checking version is valid.
         """
         _assert_version(version)
         self.version: str = version
         self._model_cls = MODELS[version]
-        self._data: dict = {}
+        if defaults:
+            self._data = self._model_cls.with_defaults().model_dump(mode="json")
+        elif not defaults:
+            self._data: dict = {}
+        else:
+            raise ValueError("defaults must be True or False")
 
     def set(self, field, value):
         """

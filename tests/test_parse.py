@@ -7,8 +7,10 @@ import datetime
 
 from pymaml import is_iso8601, valid_for
 
+
 class TestIsISO8601(unittest.TestCase):
     """Testing correct iso dates are validated correctly"""
+
     def test_valid_dates(self):
         """Valid ISO8601 dates should return True"""
         valid_dates = ["2025-01-01", "1999-12-31", datetime.date.today().isoformat()]
@@ -19,13 +21,13 @@ class TestIsISO8601(unittest.TestCase):
     def test_invalid_dates(self):
         """Invalid ISO8601 dates should return False"""
         invalid_dates = [
-            "2025/01/01",    # wrong separator
-            "01-01-2025",    # wrong order
-            "2025-13-01",    # invalid month
-            "2025-00-10",    # invalid month
-            "2025-01-32",    # invalid day
-            "not-a-date",    # junk string
-            "",              # empty string
+            "2025/01/01",  # wrong separator
+            "01-01-2025",  # wrong order
+            "2025-13-01",  # invalid month
+            "2025-00-10",  # invalid month
+            "2025-01-32",  # invalid day
+            "not-a-date",  # junk string
+            "",  # empty string
         ]
         for d in invalid_dates:
             with self.subTest(date=d):
@@ -34,6 +36,7 @@ class TestIsISO8601(unittest.TestCase):
 
 class TestValidFor(unittest.TestCase):
     """Testing the valid for function"""
+
     def test_valid_v10(self):
         """Testing that earlier versions are still validated by later versions"""
         valids = valid_for("tests/example_v1p0.maml")
@@ -52,6 +55,7 @@ class TestValidFor(unittest.TestCase):
         valids = valid_for("tests/invalid.maml")
         self.assertEqual(len(valids), 1)
         self.assertEqual("Not valid for any version of MAML", valids[0])
+
 
 if __name__ == "__main__":
     unittest.main()
