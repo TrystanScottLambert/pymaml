@@ -1,111 +1,107 @@
-# pymaml
-Official python package for reading, writing, and parsing the Meta yAML format. 
-
-(see also https://github.com/asgr/MAML)
-
 # MAML
 
-MAML is a YAML based metadata format for tabular data (roughly implying Metadata yAML). This package is the official python interface to help read, write, and parse MAML files.
-
-## Why MAML? 
-We have VOTable and FITS header already?! Well, for various projects we were keen on a rich metadata format that was easy for humans and computers to both read and write. VOTable headers are very hard for humans to read and write, and FITS is very restrictive with its formatting and only useful for FITS files directly. In comes YAML, a very human and machine-readable and writable format. By restricting ourselves to a narrow subset of the language we can easily describe fairly complex table metadata (including all IVOA information). Introducing Meta yAML (MAML).
-
-The MAML format files should be saved as example.maml etc. And the idea is the maml string can be inserted directly into a number of different file formats that accept key-value metadata (like Apache Arrow Parquet files). In the case of Parquet files they should be written to a 'maml' extension in the metadata section of the file.
-
-## MAML Metadata Format
-
-The MAML metadata format is a structured way to describe datasets, surveys, and tables using YAML. This format ensures that all necessary information about the data is captured in a clear and organized manner.
-
-### Structure
-
-The superset of allowed entries for MAML is below. Not all are required, but if present they should obey the order and naming.
-
-- **survey**: The name of the survey. *Scalar string*. **[optional]**
-- **dataset**: The name of the dataset. *Scalar string*. **[recommended]**
-- **table**: The name of the table. *Scalar string*. **[required]**
-- **version**: The version of the dataset. *Scalar string, integer or float*. **[required]**
-- **date**: The date of the dataset in `YYYY-MM-DD` format. *Scalar string*. **[required]**
-- **author**: The lead author of the dataset, including their email. *Scalar string*. **[required]**
-- **coauthors**: A list of co-authors, each with their email. *Vector string*. **[optional]**
-- **depends**: A list of datasets that this dataset depends on. *Vector string*. **[optional]**
-- **description**: A sentence or two describing the table. *Scalar string*. **[recommended]**
-- **comments**: A list of comments or interesting facts about the data. *Vector string*. **[optional]**
-- **fields**: A list of fields in the dataset, each with the following attributes: **[required]**
-  - **name**: The name of the field. *Scalar string*. **[required]**
-  - **unit**: The unit of measurement for the field (if applicable). *Scalar string*. **[recommended]**
-  - **info**: A short description of the field. *Scalar string*. **[recommended]**
-  - **ucd**: Unified Content Descriptor for IVOA (can have many). *Vector string*. **[recommended]**
-  - **data_type**: The data type of the field (e.g., `int32`, `string`, `bool`, `double`). *Scalar string*. **[required]**
-  - **array_size**: Maximum length of character strings. *Scalar integer* or *Scalar string*. **[optional]**
-
-This metadata format can be used to document datasets in a standardised way, making it easier to understand and share data within the research community. By following this format, you ensure that all relevant information about the dataset is captured and easily accessible.
-
-This format contains the superset of metadata requirements for IVOA, Data Central and surveys like GAMA and WAVES.
-
-If producing a maximal MAML then the metadata can be considered a MAML-Whale, and if only containing the required minimum entries it would be a MAML-Mouse. Between these two extremes you can choose your mammal of interest to reflect the quality/quantity of metadata. The sweet spot is obviously a MAML-Honey-Badger.
+MAML is a YAML based metadata format for tabular data. This is the official python package interface to help read, write, and parse MAML files and implementes the standards and schemas defined here: https://github.com/asgr/MAML-Format
 
 
 # pymaml
+This is the official python package for reading, writing, and parsing the Meta yAML format. The MAML format is defined by json schemas which are used to construct `pydantic` classes which enforce validation.
+
+
 ## Installation
 pymaml can be installed easily with `pip`
 ```python
 pip install pymaml
 ```
 
-## Creating a new .maml file.
-
 ## Reading in a .maml file.
-Reading a maml file is easily done using the `MAML` object in pymaml. Reading it in this way will include validation "for free". 
+Reading a maml file is done using the `MAML` object in pymaml.
 ```python
 from pymaml import MAML
-new_maml = MAML.from_file("example.maml")
+new_maml = MAML.from_file("example.maml", "v1.1")
 
 ```
-This MAML object will only be created if all the the required fields are present in the maml file.  
+This object will only be created if "example.maml" is valid maml for the given version. If it isn't, then a pydantic ValidationError will be raised explaining what is causing the validation error.
 
 
 ## Validating a .maml file.
-The pymaml package has a `validate` function that will audit a .maml file and return weather or not that file is valid as well as describe why it isnt valid and any warnigns that the users might wish to consider.
+The pymaml package has a `valid_for` function that will audit a .maml file and return a list of valid maml versions for which that file is valid.
 
 ```python
-from pymaml import validate
-validate("example.maml")
+from pymaml import valid_for
+valid_versions = valid_for("example.maml")
 
 ```
+In this way users can determine if their own maml files are actually valid for the version they expect.
 
 ## Creating a new maml file
-The `MAML` object is the core object for building and writing maml formats and will do all validation. Using this method **guarantees that the maml written is valid maml** including ucd checking and date formats.
+MAML files can be constructed from scratch using the `MAMLBuilder` which implements a builder pattern and includes some helper methods. 
 
-At the very least, a table name, author name, and at least one Field need to be passed:
 ```python
-from pymaml.maml import MAML, Field
-new_maml = MAML(table="New table Name", Author="Me, myself, and I", fields = [Field(name='ra', data_type='float')])
+from pymaml.maml import MAMLBuilder
+builder = MAMLBuilder("v1.1")
+
+```
+This is the most basic constructions and will create a new builder object which will enforce the version 1.1 schema. 
+
+Additional properties can be added or set, and the final validation occurs during the build step. 
+
+```python
+builder.set("author", "Me")
+builder.set("table", "Table Name")
+builder.set("version", "1")
+builder.add("fields", {"name": "RA", "data_type": "float"})
+builder.add("fields", {"name": "Dec", "data_type": "float"})
+builder.add("fields", {"name": "redshift", "data_type": "float"})
+builder.set("date", "1995-09-12")
+maml = builder.build()
+
+```
+The `.build()` method performs validation in the exact same way as reading from a file.
+
+### Defaults
+The builder can also generate maml based off of some basic default categories which will create valid MAML. 
+
+```python
+from pymaml.maml import MAMLBuilder
+
+builder = MAMLBuilder("v1.0", defauts=True)
+maml = builder.build()
 
 ```
 
-The `Field` object is the main way to build new fields and will also force checks to make sure that the fields are valid.
+This will always work since the defaults are always set to be valid maml. But are marked obviously to show that they are default values. The User will need to change these values. 
 
-For convience, a default maml construction can be built quickly with the class method `.default()`
+### Fields from pandas
+Since each column requires a field entry, there can be numerous columns. We include a method in the builder that will autogenerate the field names and datatypes from a pandas dataframe. 
 
 ```python
-from pymaml import MAML
-default_maml = MAML.default()
+from pymaml.maml import MAMLBuilder
+import pandas as pd
+
+df = pd.read_csv("example.csv")
+
+builder = MAMLBuilder("v1.0")
+builder.fields_from_pandas(df)
+builder.set("author", "Me")
+builder.set("table", "Table Name")
+builder.set("version", "1")
+
+maml = builder.build()
 
 ```
-Values can be updated in the normal way in python classes. Or, for convience, several setter methods are available to use including `add_comment()`, `add_field()`, and `set_date()`
+
+## Writing to file
+Once the maml data has been read in and edited, or built from scratch the `MAML` object can be written to a maml file using the `to_file` method.
 
 ```python
-from pymaml import MAML
-maml = MAML.default()
-
-maml.set_date("2025-01-02")
-maml.add_field(Field(name="Declination", ucd="pos.eq.dec", data_type="float"))
-maml.add_comment("This is an easy way to add a comment to the existing maml.")
+maml.to_file("my_maml.maml")
 
 ```
+If the maml object exists, then you can take solace in the knowledge that it is valid MAML by design.
 
-Once the `MAML` object is built, then it can easily be written to file:
+In addition the maml data can be converted into a dictionry for more fine tune editing.
+
 ```python
-maml.to_file("new_maml.maml")
+dictionary = maml.to_dict()
 
 ```
