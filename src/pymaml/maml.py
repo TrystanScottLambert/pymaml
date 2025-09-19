@@ -3,6 +3,7 @@ Main maml object.
 """
 
 import os
+import warnings
 
 import yaml
 from yaml import SafeDumper
@@ -10,7 +11,7 @@ from yaml import SafeDumper
 import pandas as pd
 
 from .read import read_maml
-from .parse import MODELS, _assert_version
+from .parse import MODELS, _assert_version, check_order
 
 
 def _remove_nones(obj):
@@ -37,10 +38,12 @@ class MAML:
     @classmethod
     def from_file(cls, file_name: str, version: str) -> "MAML":
         """
-        Creates a new maml object from file.
+        Creates a new maml object from file. Checks that order of keys is in the correct order.
         """
         _assert_version(version)
         data = read_maml(file_name)
+        if not check_order(data, version):
+            warnings.warn("Ordering is not correct. See (https://github.com/asgr/MAML-Format)")
         return cls(data, version)
 
     def to_dict(self, include_none: bool = True) -> dict:

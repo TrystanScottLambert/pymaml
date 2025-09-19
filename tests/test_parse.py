@@ -6,6 +6,7 @@ import unittest
 import datetime
 
 from pymaml import is_iso8601, valid_for
+from pymaml.parse import check_order
 
 
 class TestIsISO8601(unittest.TestCase):
@@ -55,6 +56,58 @@ class TestValidFor(unittest.TestCase):
         valids = valid_for("tests/invalid.maml")
         self.assertEqual(len(valids), 1)
         self.assertEqual("Not valid for any version of MAML", valids[0])
+
+
+class TestOrder(unittest.TestCase):
+    """
+    Testing the check_order function.
+    """
+
+    def test_10_correct(self):
+        """Testing that v1.0 returns true for the correct orders."""
+        correct = {
+            "survey": 1,
+            "author": 2,
+            "DOIs": [{"DOI": 1, "type": 1}],
+            "fields": [{"name": 1, "unit": 1, "data_type": 1}],
+        }
+        res = check_order(correct, "v1.0")
+        self.assertTrue(res)
+
+    def test_11_correct(self):
+        """Testing that v1.1 returns true for the correct orders."""
+        correct = {
+            "survey": 1,
+            "author": 2,
+            "DOIs": [{"DOI": 1, "type": 1}],
+            "extra": 1,
+            "fields": [{"name": 1, "unit": 1, "data_type": 1}],
+        }
+        res = check_order(correct, "v1.1")
+        self.assertTrue(res)
+
+    def test_10_incorrect(self):
+        """Testing that v1.0 returns false for incorrect orders."""
+        correct = {
+            "survey": 1,
+            "author": 2,
+            "DOIs": [{"DOI": 1, "type": 1}],
+            "fields": [{"name": 1, "data_type": 1, "unit": 1}],  # unit in wrong place.
+        }
+        res = check_order(correct, "v1.0")
+        self.assertFalse(res)
+
+    def test_11_incorrect(self):
+        """Testing that v1.1 returns false for incorrect orders."""
+        correct = {
+            "survey": 1,
+            "author": 2,
+            "DOIs": [{"DOI": 1, "type": 1}],
+            "fields": [{"name": 1, "data_type": 1, "unit": 1}],
+            "extra": 1,
+        }
+        res = check_order(correct, "v1.1")
+        self.assertFalse(res)
 
 
 if __name__ == "__main__":
