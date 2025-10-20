@@ -57,6 +57,31 @@ class TestMAML(unittest.TestCase):
         self.assertDictEqual(test_maml.__dict__, read_back_in.__dict__)
         os.remove("test.maml")
 
+    def test_to_markdown(self):
+        """
+        Testing that the to_markdown method creates a valid markdown file.
+        """
+        test_maml = MAML.from_file("tests/example_v1p0.maml", "v1.0")
+        test_maml_v1p1 = MAML.from_file("tests/example_v1p1.maml", "v1.1")
+        test_maml.to_markdown("test_markdown_v1p0.md")
+        test_maml_v1p1.to_markdown("test_markdown_v1p1.md")
+
+        with open("tests/example_markdown_v1p1.md", encoding="utf8") as file:
+            answer_v1p1 = file.read()
+
+        with open("tests/example_markdown_v1p0.md", encoding="utf8") as file:
+            answer_v1p0 = file.read()
+
+        with open("test_markdown_v1p0.md", encoding="utf8") as file:
+            result_v1p0 = file.read()
+        with open("test_markdown_v1p1.md", encoding="utf8") as file:
+            result_v1p1 = file.read()
+
+        self.assertEqual(answer_v1p1.strip(), result_v1p1.strip())
+        self.assertEqual(answer_v1p0.strip(), result_v1p0.strip())
+        os.remove("test_markdown_v1p0.md")
+        os.remove("test_markdown_v1p1.md")
+
     def test_to_dict(self):
         """
         Testing that the object can be represented as a dictionary
@@ -223,21 +248,21 @@ class TestMAMLBuilderHelpers(unittest.TestCase):
         builder = MAMLBuilder("v1.1", defaults=True)
         builder.add("DOIs", "testtest")
         builder.add("DOIs", "more_tests")
-        self.assertEqual(builder._data['DOIs'][0], "testtest")
-        self.assertEqual(builder._data['DOIs'][1], "more_tests")
+        self.assertEqual(builder._data["DOIs"][0], "testtest")
+        self.assertEqual(builder._data["DOIs"][1], "more_tests")
+
 
 class TestBuilderFieldsFromPandas(unittest.TestCase):
     """Testing that we can build the fields from pandas dataframes"""
+
     def setUp(self):
         self.builder = MAMLBuilder("v1.1")
 
     def test_basic_dataframe(self):
         """Simple case"""
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "value": [0.1, 0.2, 0.3],
-            "name": ["a", "b", "c"]
-        })
+        df = pd.DataFrame(
+            {"id": [1, 2, 3], "value": [0.1, 0.2, 0.3], "name": ["a", "b", "c"]}
+        )
 
         self.builder.fields_from_pandas(df)
 
@@ -258,10 +283,7 @@ class TestBuilderFieldsFromPandas(unittest.TestCase):
         self.assertEqual(self.builder._data.get("fields", []), [])
 
     def test_weird_column_names(self):
-        df = pd.DataFrame({
-            "Column With Space": [1, 2],
-            "special!char$": ["x", "y"]
-        })
+        df = pd.DataFrame({"Column With Space": [1, 2], "special!char$": ["x", "y"]})
 
         self.builder.fields_from_pandas(df)
 

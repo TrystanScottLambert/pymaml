@@ -9,6 +9,7 @@ import yaml
 from yaml import SafeDumper
 
 import pandas as pd
+from yaml_to_markdown.md_converter import MDConverter
 
 from .read import read_maml
 from .parse import MODELS, _assert_version, check_order
@@ -43,7 +44,9 @@ class MAML:
         _assert_version(version)
         data = read_maml(file_name)
         if not check_order(data, version):
-            warnings.warn("Ordering is not correct. See (https://github.com/asgr/MAML-Format)")
+            warnings.warn(
+                "Ordering is not correct. See (https://github.com/asgr/MAML-Format)"
+            )
         return cls(data, version)
 
     def to_dict(self, include_none: bool = True) -> dict:
@@ -70,6 +73,15 @@ class MAML:
             yaml.safe_dump(
                 self.to_dict(), file, sort_keys=False, default_flow_style=False
             )
+
+    def to_markdown(self, outfile: str) -> None:
+        """
+        Dumps the maml as a markdown file.
+        """
+        data = self.to_dict()
+        converter = MDConverter()
+        with open(outfile, "w", encoding="utf8") as f:
+            converter.convert(data, f)
 
     def __str__(self) -> str:
         data = self.meta.model_dump(mode="json")
