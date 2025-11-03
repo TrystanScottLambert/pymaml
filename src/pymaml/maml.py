@@ -9,6 +9,7 @@ import yaml
 from yaml import SafeDumper
 
 import pandas as pd
+import polars as pl
 from yaml_to_markdown.md_converter import MDConverter
 
 from .read import read_maml
@@ -143,12 +144,22 @@ class MAMLBuilder:
         all_values = self._model_cls.with_defaults().model_dump(mode="json").keys()
         return list(all_values)
 
-    def fields_from_pandas(self, pandas_dataframe: pd.DataFrame):
+    def fields_from_pandas(self, pandas_dataframe: pd.DataFrame) -> "MAMLBuilder":
         """
         Fills in the fields from a pandas dataframe using the column names and types.
         """
         field_names = list(pandas_dataframe.columns)
         data_types = [str(dtype) for dtype in list(pandas_dataframe.dtypes)]
+        for field_name, dtype in zip(field_names, data_types):
+            self.add("fields", {"name": field_name, "data_type": dtype})
+        return self
+
+    def fields_from_polars(self, polars_dataframe: pl.DataFrame) -> "MAMLBuilder":
+        """
+        Fills in the fields from a polars dataframe using the column names and types.
+        """
+        field_names = list(polars_dataframe.columns)
+        data_types = [str(dtype) for dtype in list(polars_dataframe.dtypes)]
         for field_name, dtype in zip(field_names, data_types):
             self.add("fields", {"name": field_name, "data_type": dtype})
         return self
