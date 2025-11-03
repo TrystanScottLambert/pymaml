@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import date as date_aliased
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from astropy.io.votable.ucd import check_ucd
 
 from .date_funcs import today
@@ -156,3 +156,30 @@ class V1P1(BaseModel):
                 )
             ],
         )
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_explicit_nones(cls, values):
+        """Reject explicitly set None values for optional fields."""
+        optional_fields = [
+            "survey",
+            "dataset",
+            "description",
+            "comments",
+            "license",
+            "keywords",
+            "coauthors",
+            "DOIs",
+            "depends",
+            "keyarray",
+            "extra",
+        ]
+
+        for field in optional_fields:
+            # Check if field exists in input AND is explicitly None
+            if field in values and values[field] is None:
+                raise ValueError(
+                    f"{field} cannot be explicitly set to None. Omit the field instead."
+                )
+
+        return values
