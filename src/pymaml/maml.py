@@ -59,7 +59,7 @@ class MAML:
             return _remove_nones(raw)
         return raw
 
-    def to_file(self, file_name: str) -> dict:
+    def to_file(self, file_name: str, include_none: bool = False) -> dict:
         """
         Creates a dictionary representation of the base model.
         """
@@ -72,7 +72,10 @@ class MAML:
             raise ValueError(f"Extension '{ext}' is not a valid maml extension.")
         with open(f"{root}.maml", "w", encoding="utf8") as file:
             yaml.safe_dump(
-                self.to_dict(), file, sort_keys=False, default_flow_style=False
+                self.to_dict(include_none),
+                file,
+                sort_keys=False,
+                default_flow_style=False,
             )
 
     def to_markdown(self, outfile: str) -> None:
